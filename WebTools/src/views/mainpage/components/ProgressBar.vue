@@ -7,6 +7,11 @@ defineProps({
 
 <template>
   <el-affix :offset="0" class="fixed" v-show="isActive">
-    <el-progress :percentage="percentage" :show-text="false" :stroke-width="4" />
+    <el-progress
+      :percentage="percentage"
+      status="success"
+      :indeterminate="true"
+      :duration="5"
+    />
   </el-affix>
 </template>

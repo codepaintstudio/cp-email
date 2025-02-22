@@ -2,7 +2,7 @@
 import { defineProps, defineEmits } from 'vue'
 import Tiptap from '@/components/Tiptap.vue'
 
-const props = defineProps({
+defineProps({
   subject: String,
   content: String
 })
@@ -21,6 +21,15 @@ const emit = defineEmits(['update:subject', 'update:content'])
     />
   </div>
   <div class="show">
-    <Tiptap :modelValue="content" @update:modelValue="(val) => emit('update:content', val)" />
+    <Tiptap
+      :modelValue="content"
+      @update:modelValue="(val) => emit('update:content', val)"
+    />
   </div>
 </template>
+
+<style lang="scss" scoped>
+:deep(.el-input__wrapper) {
+  box-shadow: none;
+}
+</style>
