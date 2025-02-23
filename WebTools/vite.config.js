@@ -19,7 +19,9 @@ export default defineConfig({
     }),
     createSvgIconsPlugin({
       // 使用 Node.js 的路径解析
-      iconDirs: [resolve(fileURLToPath(new URL('./src/assets/svg', import.meta.url)))],
+      iconDirs: [
+        resolve(fileURLToPath(new URL('./src/assets/svg', import.meta.url)))
+      ],
       // 这个表示id，按这个来就对了
       symbolId: 'icon-[dir]-[name]'
     })

@@ -5,7 +5,12 @@ defineProps({
   disableSend: Boolean
 })
 
-const emit = defineEmits(['file-change', 'clear-data', 'send-emails', 'download-template'])
+const emit = defineEmits([
+  'file-change',
+  'clear-data',
+  'send-emails',
+  'download-template'
+])
 </script>
 
 <template>
@@ -22,7 +27,9 @@ const emit = defineEmits(['file-change', 'clear-data', 'send-emails', 'download-
           上传Excel
         </el-button>
       </el-upload>
-      <el-button class="delete_bt" @click="emit('clear-data')">清空数据</el-button>
+      <el-button class="delete_bt" @click="emit('clear-data')"
+        >清空数据</el-button
+      >
     </div>
 
     <div class="right-buttons">
@@ -36,7 +43,9 @@ const emit = defineEmits(['file-change', 'clear-data', 'send-emails', 'download-
         <el-icon style="margin-right: 6px"><Promotion /></el-icon>
         一键发送
       </el-button>
-      <el-button class="delete_bt" @click="emit('download-template')"> 下载模板 </el-button>
+      <el-button class="delete_bt" @click="emit('download-template')">
+        下载模板
+      </el-button>
     </div>
   </div>
 </template>

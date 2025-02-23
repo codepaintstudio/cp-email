@@ -22,7 +22,7 @@ const excelData = ref([{ email: '', state: 1 }])
 const emailContent = ref('')
 const subject = ref('')
 const loading = ref(false)
-const sendProcess = ref(0)
+const sendProcess = ref(100)
 const acceptedEmail = ref([])
 const MAX_ROWS = 100
 const showIntro = ref(localStorage.getItem('hideIntro') !== 'true')
@@ -202,7 +202,11 @@ const handleLogout = () => {
 
     <div class="banner">
       <!-- 头部logo和账户信息 -->
-      <AppHeader :user-email="userEemil" :is-logged-in="isLogin" @logout="handleLogout" />
+      <AppHeader
+        :user-email="userEemil"
+        :is-logged-in="isLogin"
+        @logout="handleLogout"
+      />
 
       <!-- 功能区域 -->
       <ControlPanel
@@ -231,25 +235,53 @@ const handleLogout = () => {
       />
 
       <!-- 介绍按钮弹窗 -->
-      <div class="explain">
-        <el-button plain @click="showIntro = true" class="delete_bt explain_button" type="info">
+      <div class="explain" v-show="!showIntro">
+        <el-button
+          plain
+          @click="showIntro = true"
+          class="delete_bt explain_button"
+          type="info"
+        >
           ?
         </el-button>
       </div>
     </div>
-
-    <!-- 底部版权介绍 -->
-    <div class="footer">
-      <p>
-        Copyright © 2024 EmailTools.Designed by
-        <a href="https://github.com/CodePaintStudio">CodePaint</a>
-      </p>
-    </div>
+  </div>
+  <!-- 底部版权介绍 -->
+  <div class="footer">
+    <p>
+      Copyright © 2024 EmailTools.Designed by
+      <a href="https://github.com/CodePaintStudio">CodePaint</a>
+    </p>
   </div>
 </template>
 
 <style lang="scss">
 :deep(.el-input__wrapper) {
   box-shadow: none;
+}
+.footer {
+  padding: 20px 0;
+  margin: 2rem 0 -8px;
+  background-color: #f8f8f8;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  border-top: 1px solid #ddd;
+
+  a {
+    color: #3370ff;
+    text-decoration: none;
+    font-weight: bold;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  p {
+    margin: 0;
+    padding: 0;
+  }
 }
 </style>

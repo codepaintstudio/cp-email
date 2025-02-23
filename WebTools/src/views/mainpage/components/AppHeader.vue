@@ -33,7 +33,12 @@ const emit = defineEmits(['logout'])
         </span>
         <template #dropdown>
           <el-dropdown-menu class="menu-button">
-            <el-button v-if="isLoggedIn" class="delete_bt" type="warning" @click="emit('logout')">
+            <el-button
+              v-if="isLoggedIn"
+              class="delete_bt"
+              type="warning"
+              @click="emit('logout')"
+            >
               退出登录
             </el-button>
           </el-dropdown-menu>
