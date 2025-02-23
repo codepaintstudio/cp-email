@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { Message, ArrowDown } from '@element-plus/icons-vue'
 defineProps({
   userEmail: String,

@@ -1,20 +1,17 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import MainPage from '@/views/mainpage/index.vue'
-import LoginPage from '@/views/login/index.vue'
 
 // 创建路由实例
-const routes = [
+const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    // 重定向
     name: 'Login',
-    component: LoginPage
+    component: () => import('@/views/login/index.vue')
   },
   {
     path: '/main',
     name: 'MainPage',
-    component: MainPage
+    component: () => import('@/views/mainpage/index.vue')
   },
   {
     path: '/:catchAll(.*)',

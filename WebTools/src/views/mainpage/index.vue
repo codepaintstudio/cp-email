@@ -1,37 +1,42 @@
-<script setup>
+<script setup lang='ts'>
 import { ref, computed, onMounted } from 'vue'
 import * as XLSX from 'xlsx'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '../../stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { sendEmailService } from '@/api/postEmail'
-import { getTemplateDownload } from '@/api/gettemplate'
+import { getTemplateDownload } from '../../api/gettemplate'
 import { useRouter } from 'vue-router'
-import IntroDialog from '@/components/IntroDialog.vue'
+import IntroDialog from '../../components/IntroDialog.vue'
 import ProgressBar from './components/ProgressBar.vue'
 import AppHeader from './components/AppHeader.vue'
 import ControlPanel from './components/ControlPanel.vue'
 import EmailEditor from './components/EmailEditor.vue'
 import EmailDataTable from './components/EmailDataTable.vue'
+import { sendEmailService } from '@/api/postEmail'
 
 const router = useRouter()
 const UserStore = useUserStore()
 
+interface ExcelRow {
+  email: string
+  state: number
+}
+
 // 状态管理
-const isClick = ref(false)
-const excelData = ref([{ email: '', state: 1 }])
-const emailContent = ref('')
-const subject = ref('')
-const loading = ref(false)
-const sendProcess = ref(100)
-const acceptedEmail = ref([])
+const isClick = ref<boolean>(false)
+const excelData = ref<ExcelRow[]>([{ email: '', state: 1 }])
+const emailContent = ref<string>('')
+const subject = ref<string>('')
+const loading = ref<boolean>(false)
+const sendProcess = ref<number>(100)
+const acceptedEmail = ref<string[]>([])
 const MAX_ROWS = 100
-const showIntro = ref(localStorage.getItem('hideIntro') !== 'true')
-const userEemil = ref('')
-const isLogin = ref(UserStore.hasToken())
+const showIntro = ref<boolean>(localStorage.getItem('hideIntro') !== 'true')
+const userEemil = ref<string>('')
+const isLogin = ref<boolean>(UserStore.hasToken())
 
 // 计算列
-const columns = computed(() => {
-  const cols = new Set()
+const columns = computed<string[]>(() => {
+  const cols = new Set<string>()
   excelData.value.forEach((row) => {
     Object.keys(row).forEach((key) => cols.add(key))
   })
@@ -47,18 +52,18 @@ onMounted(() => {
 })
 
 // 文件处理方法
-let debounceTimer = null
-const handleFileChange = async (file) => {
+let debounceTimer: number | null = null
+const handleFileChange = async (file: File) => {
   if (!file) return
   if (debounceTimer) clearTimeout(debounceTimer)
 
-  debounceTimer = setTimeout(async () => {
+  debounceTimer = window.setTimeout(async () => {
     loading.value = true
     try {
       const data = await readExcelFile(file)
       const workbook = XLSX.read(data, { type: 'binary' })
       const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-      let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 2 })
+      let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 2 }) as ExcelRow[]
 
       if (jsonData.length > MAX_ROWS) {
         ElMessage.error(`最多允许 ${MAX_ROWS} 行数据`)
@@ -80,12 +85,18 @@ const handleFileChange = async (file) => {
   }, 100)
 }
 
-const readExcelFile = (file) => {
+const readExcelFile = (File: any): Promise<string | ArrayBuffer | null> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = (e) => resolve(e.target.result)
-    reader.onerror = (error) => reject(error)
-    reader.readAsBinaryString(file.raw)
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        resolve(e.target.result)
+      } else {
+        reject(new Error('Failed to read file'))
+      }
+    }
+    reader.onerror = (error: ProgressEvent<FileReader>) => reject(error)
+    reader.readAsBinaryString(File.raw)
   })
 }
 
@@ -107,7 +118,7 @@ const sendEmails = async () => {
 
   try {
     const receiverItems = excelData.value.map((item) => [
-      item[Object.keys(item)[0]],
+      item.email,
       new Date().toLocaleString()
     ])
 
@@ -121,14 +132,18 @@ const sendEmails = async () => {
 
     acceptedEmail.value = res.data.data.successList
     updateEmailStates()
-    ElMessage.success('邮件发送完成')
+    if(acceptedEmail.value.length > 0){
+      ElMessage.success('邮件发送完成')
+    }else{
+      ElMessage.error('请检插邮件号是否符合要求')
+    }
   } finally {
     isClick.value = false
   }
 }
 
 const validateBeforeSend = () => {
-  if (!excelData.value.length) {
+  if (excelData.value[0].email === '' && excelData.value.length <= 1) {
     ElMessage.warning('请先导入Excel数据')
     return false
   }
@@ -145,12 +160,12 @@ const validateBeforeSend = () => {
 
 const updateEmailStates = () => {
   excelData.value.forEach((item) => {
-    const email = item[Object.keys(item)[0]]
+    const email = item.email
     item.state = acceptedEmail.value.includes(email) ? 2 : 0
   })
 }
 
-const handleDeleteRow = (index) => {
+const handleDeleteRow = (index: number) => {
   if (excelData.value.length === 1) {
     ElMessage.error('至少保留一行数据')
     return
@@ -172,7 +187,7 @@ const handleAddRow = () => {
   }
 }
 
-const handleDownloadTemplate = async () => {
+const handleDownloadTemplate = async (): Promise<void> => {
   try {
     const res = await getTemplateDownload()
     const blob = new Blob([res.data], { type: res.headers['content-type'] })

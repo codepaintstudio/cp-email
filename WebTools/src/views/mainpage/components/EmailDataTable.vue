@@ -1,11 +1,12 @@
-<script setup>
+<script setup  lang="ts">
 import { Delete } from '@element-plus/icons-vue'
 
-defineProps({
-  data: Array,
-  columns: Array,
-  loading: Boolean
-})
+defineProps<{
+  data: Record<string, any>[]
+  columns: string[]
+  loading: boolean
+}>()
+
 const emit = defineEmits(['delete-row', 'add-row'])
 </script>
 

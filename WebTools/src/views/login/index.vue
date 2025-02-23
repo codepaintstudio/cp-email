@@ -1,17 +1,25 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElLoading } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '../../stores/user'
 import { useRouter } from 'vue-router'
-import { LoginVerify } from '@/api/emailLogin'
+import { LoginVerify } from '../../api/emailLogin'
+
+interface LoginData {
+  email: string
+  password: string
+}
 
 const router = useRouter()
 const UserStore = useUserStore()
-const formRef = ref(null)
-const emailData = ref({
+const formRef = ref<any>(null)
+
+
+const emailData = ref<LoginData>({
   email: '',
   password: ''
 })
+
 
 const rules = {
   email: [
@@ -37,7 +45,7 @@ onMounted(() => {
 })
 
 async function onSubmit() {
-  formRef.value.validate(async (valid) => {
+  formRef.value.validate(async (valid: boolean) => {
     if (!valid) {
       ElMessage.error('请填写完整的登录信息')
       return false
@@ -71,7 +79,7 @@ async function onSubmit() {
         router.push('/main')
       } else {
         loading.close()
-        ElMessage.error(response.info || '登录失败，请检查邮箱和授权码')
+        ElMessage.error(response.data.msg || '登录失败，请检查邮箱和授权码')
       }
     } catch (error) {
       loading.close()
@@ -93,45 +101,21 @@ function onReset() {
       <div class="text">CP-EmailTools</div>
     </div>
     <!-- 表单 -->
-    <el-form
-      ref="formRef"
-      :model="emailData"
-      label-width="auto"
-      :rules="rules"
-      class="el-form"
-    >
+    <el-form ref="formRef" :model="emailData" label-width="auto" :rules="rules" class="el-form">
       <div class="text">登录</div>
       <!-- 邮箱 -->
       <el-form-item prop="email" class="el-form-item">
-        <el-input
-          v-model="emailData.email"
-          autocomplete="off"
-          placeholder="输入邮箱地址"
-          class="input-field"
-        ></el-input>
+        <el-input v-model="emailData.email" autocomplete="off" placeholder="输入邮箱地址" class="input-field"></el-input>
       </el-form-item>
       <!-- 邮箱授权码 -->
       <el-form-item prop="password" class="el-form-item">
-        <el-input
-          type="password"
-          v-model="emailData.password"
-          placeholder="请输入邮箱授权码"
-          autocomplete="off"
-          class="input-field"
-        ></el-input>
+        <el-input type="password" v-model="emailData.password" placeholder="请输入邮箱授权码" autocomplete="off"
+                  class="input-field"></el-input>
       </el-form-item>
       <!-- 确定取消按钮 -->
       <div class="bt">
-        <el-button
-          color="#3370FF"
-          type="primary"
-          @click="onSubmit"
-          class="inner_bt"
-          >确认</el-button
-        >
-        <el-button plain="true" @click="onReset" class="inner_bt"
-          >清空</el-button
-        >
+        <el-button color="#3370FF" type="primary" @click="onSubmit" class="inner_bt">确认</el-button>
+        <el-button plain="true" @click="onReset" class="inner_bt">清空</el-button>
       </div>
     </el-form>
   </div>
@@ -145,26 +129,28 @@ function onReset() {
   justify-content: center;
   height: 100vh;
   margin: -8px;
-  background: conic-gradient(
-    from 109.82431090096661deg at 74.47646856307983% -86.3436758518219%,
-    #c1d2fa 1%,
-    #f8f9fa 37%,
-    #ffffff 49%,
-    #feffff 55%
-  );
+  background: conic-gradient(from 109.82431090096661deg at 74.47646856307983% -86.3436758518219%,
+      #c1d2fa 1%,
+      #f8f9fa 37%,
+      #ffffff 49%,
+      #feffff 55%);
+
   .title {
     display: flex;
     align-items: center;
     justify-content: center;
     transform: translateX(-15%);
+
     .box {
       width: 8rem;
+
       img {
         width: 10rem;
         height: 100px;
         object-fit: contain;
       }
     }
+
     .text {
       font-size: 2rem;
       font-weight: bold;
