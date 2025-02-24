@@ -41,6 +41,7 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (res: AxiosResponse<ApiResponse>) => {
+    console.log(res)
     if (res.data.code === 0 || res.status === 200) {
       return res
     }

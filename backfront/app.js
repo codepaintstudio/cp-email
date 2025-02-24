@@ -5,6 +5,8 @@ const { sendRes, RES_CODE } = require('./handle/errorHandle')
 const server = express()
 const expressJWT = require('express-jwt')
 const config = require('./config')
+const errorHandler = require('./handle/errorhandler')
+
 
 //解决跨域
 const cors = require('cors')
@@ -22,26 +24,13 @@ server.use(
     })
 )
 
-//添加错误处理中间件
-server.use((err, req, res, next) => {
-  // 设置CORS头
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173')
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  if (err.name === 'UnauthorizedError') {
-    console.log(err.name)
-    return res.status(401).json({
-      code: 401,
-      msg: 'token无效或已过期',
-      data: null,
-    })
-  }
-  next()
-})
+//错误处理中间件
+server.use(errorHandler)
 
 //配置实例解析项
 server.use(express.urlencoded({ extends: false }))
 server.use(express.json())
+
 
 // 创建登录路由
 const loginRouter = require('./router/verifyLogin')
