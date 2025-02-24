@@ -36,7 +36,7 @@ router.post('/verify', async (req, res) => {
   smtpServer.verify(function (error, success) {
     if (error) {
       return sendRes(res, RES_CODE.PARAM_ERROR, '请检查账号密码是否正确！')
-    } {
+    }else{
       // 账号密码验证成功后，生成JWT token
       const user = {
         email: email, // 将email作为token的载荷
@@ -47,7 +47,7 @@ router.post('/verify', async (req, res) => {
       })
       // 返回响应，包括生成的token
       return sendRes(res, RES_CODE.SUCCESS, {
-        msg:'账号密码验证成功',
+        msg: '账号密码验证成功',
         token: 'Bearer ' + token,
       })
     }
