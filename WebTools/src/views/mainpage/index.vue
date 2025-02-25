@@ -29,7 +29,7 @@ const subject = ref<string>('')
 const loading = ref<boolean>(false)
 const sendProcess = ref<number>(100)
 const acceptedEmail = ref<string[]>([])
-const MAX_ROWS = 100
+const MAX_ROWS = 10000
 const showIntro = ref<boolean>(localStorage.getItem('hideIntro') !== 'true')
 const userEemil = ref<string>('')
 const isLogin = ref<boolean>(UserStore.hasToken())
