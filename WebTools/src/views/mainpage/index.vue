@@ -34,7 +34,7 @@ const showIntro = ref<boolean>(localStorage.getItem('hideIntro') !== 'true')
 const userEemil = ref<string>('')
 const isLogin = ref<boolean>(UserStore.hasToken())
 
-// 计算列
+// 处理列
 const columns = computed<string[]>(() => {
   const cols = new Set<string>()
   excelData.value.forEach((row) => {

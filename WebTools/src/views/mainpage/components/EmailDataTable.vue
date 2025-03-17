@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Delete } from '@element-plus/icons-vue'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps<{
   data: Record<string, any>[]
@@ -12,7 +12,7 @@ const emit = defineEmits(['delete-row', 'add-row'])
 
 // 分页相关
 const currentPage = ref(1)
-const pageSize = ref(100)
+const pageSize = ref(30)
 
 // 计算当前页的数据
 const paginatedData = computed(() => {
@@ -25,6 +25,16 @@ const paginatedData = computed(() => {
 const handleCurrentChange = (val: number) => {
   currentPage.value = val
 }
+
+watch(
+  () => props.data,
+  (newData) => {
+    const totalPages = Math.ceil(newData.length / pageSize.value)
+    if (currentPage.value > totalPages) {
+      currentPage.value = 1
+    }
+  },
+)
 </script>
 
 <template>
