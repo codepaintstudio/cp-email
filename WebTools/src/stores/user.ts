@@ -4,19 +4,19 @@ import { ref } from 'vue'
 export const useUserStore = defineStore(
   'user',
   () => {
-    const Token = ref('')
-    const email = ref('')
-    const password = ref('')
+    const Token = ref<string>('')
+    const email = ref<string>('')
+    const password = ref<string>('')
 
-    function setToken(e) {
+    function setToken(e: string) {
       Token.value = e
     }
 
-    function setEmail(e) {
+    function setEmail(e: string) {
       email.value = e
     }
 
-    function setPassword(e) {
+    function setPassword(e: string) {
       password.value = e
     }
 
@@ -40,8 +40,6 @@ export const useUserStore = defineStore(
     }
   },
   {
-    persist: {
-      enabled: true
-    }
+    persist: true
   }
 )

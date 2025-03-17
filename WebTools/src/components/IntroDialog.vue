@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import {
   Warning,
@@ -17,14 +17,28 @@ const props = defineProps({
   }
 })
 
+interface Step {
+  icon: any
+  title: string
+  content: string
+  subSteps?: string[]
+  demo?: string
+}
+
+interface ImportantNote {
+  type: 'error' | 'warning' | 'success' | 'info'
+  title: string
+  details: string[]
+}
+
 const emit = defineEmits(['update:modelValue'])
 
 // 响应式状态
-const hideForever = ref(localStorage.getItem('hideIntro') === 'true')
-const visible = ref(props.modelValue)
+const hideForever = ref<boolean>(localStorage.getItem('hideIntro') === 'true')
+const visible = ref<boolean>(props.modelValue)
 
 // 步骤配置数据
-const steps = ref([
+const steps = ref<Step[]>([
   {
     icon: Download,
     title: '第一步：下载模板',
@@ -55,7 +69,7 @@ const steps = ref([
     icon: Edit,
     title: '第四步：撰写邮件',
     content: '使用富文本编辑器编写邮件内容',
-    subSteps: ['在“邮件主题”输入框中填写主题', '支持图片和链接发送'],
+    subSteps: ['在"邮件主题"输入框中填写主题', '支持图片和链接发送'],
     demo: `尊敬的xx:
   您已成功申请xx职位,请查收面试通知。`
   },
@@ -63,7 +77,7 @@ const steps = ref([
     icon: Promotion,
     title: '第五步：批量发送',
     content: '安全高效地完成邮件投递',
-    subSteps: ['点击“一键发送”按钮开始发送', '显示发送进度和状态'],
+    subSteps: ['点击"一键发送"按钮开始发送', '显示发送进度和状态'],
     demo: `发送状态：
 ✅ 成功
 ⏳ 未发送
@@ -72,7 +86,7 @@ const steps = ref([
 ])
 
 // 注意事项配置
-const importantNotes = ref([
+const importantNotes = ref<ImportantNote[]>([
   {
     type: 'error',
     title: '安全须知',
@@ -108,7 +122,7 @@ watch(
 )
 
 // 处理关闭事件
-const handleClose = () => {
+const handleClose = (): void => {
   localStorage.setItem('hideIntro', hideForever.value.toString())
   visible.value = false
   emit('update:modelValue', false)

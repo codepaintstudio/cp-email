@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { UploadFilled, Promotion } from '@element-plus/icons-vue'
 
 defineProps({
@@ -20,7 +20,9 @@ const emit = defineEmits([
         :limit="1"
         :show-file-list="false"
         accept=".xlsx, .xls"
-        :on-change="(file) => emit('file-change', file)"
+        :on-change="(file:any) => emit('file-change', file)"
+        :auto-upload="false"
+        :http-request="() => {}"
       >
         <el-button type="primary" color="#3370FF" class="upload_bt">
           <el-icon style="margin-right: 6px"><UploadFilled /></el-icon>
