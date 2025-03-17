@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { UploadFilled, Promotion } from '@element-plus/icons-vue'
 
 defineProps({
@@ -11,16 +12,24 @@ const emit = defineEmits([
   'send-emails',
   'download-template'
 ])
+
+const uploadKey = ref(0)
+
+const handleFileChange = (file: any) => {
+  emit('file-change', file)
+  uploadKey.value++  // 强制刷新上传组件
+}
 </script>
 
 <template>
   <div class="main">
     <div class="left-buttons">
       <el-upload
+        :key="uploadKey"
         :limit="1"
         :show-file-list="false"
         accept=".xlsx, .xls"
-        :on-change="(file:any) => emit('file-change', file)"
+        :on-change="handleFileChange"
         :auto-upload="false"
         :http-request="() => {}"
       >
