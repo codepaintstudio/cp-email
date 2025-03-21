@@ -5,7 +5,6 @@ import { useUserStore } from '../../stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getTemplateDownload } from '../../api/gettemplate'
 import { useRouter } from 'vue-router'
-import IntroDialog from '../../components/IntroDialog.vue'
 import ProgressBar from './components/ProgressBar.vue'
 import AppHeader from './components/AppHeader.vue'
 import ControlPanel from './components/ControlPanel.vue'
@@ -30,7 +29,6 @@ const loading = ref<boolean>(false)
 const sendProcess = ref<number>(100)
 const acceptedEmail = ref<string[]>([])
 const MAX_ROWS = 10000
-const showIntro = ref<boolean>(localStorage.getItem('hideIntro') !== 'true')
 const userEemil = ref<string>('')
 const isLogin = ref<boolean>(UserStore.hasToken())
 
@@ -210,8 +208,6 @@ const handleLogout = () => {
 
 <template>
   <div class="box">
-    <!-- 使用介绍 -->
-    <IntroDialog v-model="showIntro" />
     <!-- 进度条 -->
     <ProgressBar :percentage="sendProcess" :is-active="isClick" />
 
@@ -248,18 +244,6 @@ const handleLogout = () => {
         @delete-row="handleDeleteRow"
         @add-row="handleAddRow"
       />
-
-      <!-- 介绍按钮弹窗 -->
-      <div class="explain" v-show="!showIntro">
-        <el-button
-          plain
-          @click="showIntro = true"
-          class="delete_bt explain_button"
-          type="info"
-        >
-          ?
-        </el-button>
-      </div>
     </div>
   </div>
   <!-- 底部版权介绍 -->
