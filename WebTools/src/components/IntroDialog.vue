@@ -43,10 +43,8 @@ const steps = ref<Step[]>([
     icon: Download,
     title: '第一步：下载模板',
     content: '从后端获取标准Excel模板文件,确保数据格式正确',
-    subSteps: ['点击右上角 <b>下载模板</b> 按钮', '模板第一列必须为 <em>email</em>'],
-    demo: `   email
-   user1@demo.com
-   user2@demo.com`
+    subSteps: ['点击右上角 <b>下载模板</b> 按钮', '上传execl必须存在email列为 <em>email</em>'],
+    demo: 'email\nuser1@demo.com\nuser2@demo.com'
   },
   {
     icon: User,
@@ -63,27 +61,24 @@ const steps = ref<Step[]>([
     icon: Upload,
     title: '第三步：上传数据',
     content: '上传包含收件人信息的Excel文件',
-    subSteps: ['支持 .xlsx 和 .xls 格式', '最多同时处理100条数据', '自动识别首列作为收件地址']
+    subSteps: ['支持 .xlsx 和 .xls 格式', '自动识别Excel列作为收件地址']
   },
   {
     icon: Edit,
     title: '第四步：撰写邮件',
     content: '使用富文本编辑器编写邮件内容',
-    subSteps: ['在"邮件主题"输入框中填写主题', '支持图片和链接发送'],
-    demo: `尊敬的xx:
-  您已成功申请xx职位,请查收面试通知。`
+    subSteps: ['在"邮件主题"输入框中填写主题', '支持图片和链接发送', '支持根据收件人信息动态替换内容'],
+    demo: '尊敬的{name}:\n您已成功申请{xx}职位,请查收面试通知。'
   },
   {
     icon: Promotion,
     title: '第五步：批量发送',
     content: '安全高效地完成邮件投递',
     subSteps: ['点击"一键发送"按钮开始发送', '显示发送进度和状态'],
-    demo: `发送状态：
-✅ 成功
-⏳ 未发送
-❌ 失败`
-  }
-])
+    demo: '发送状态：\n✅ 成功\n⏳ 未发送\n❌ 失败'
+  },
+]);
+
 
 // 注意事项配置
 const importantNotes = ref<ImportantNote[]>([
