@@ -69,7 +69,8 @@ const validateExcelColumns = (requiredColumns: string[]): string[] => {
 };
 
 // 文件处理方法
-let debounceTimer: number | null = null
+let debounceTimer: number | null = null;
+
 const handleFileChange = async (file: File) => {
   if (!file) return;
   if (debounceTimer) clearTimeout(debounceTimer);
@@ -88,11 +89,24 @@ const handleFileChange = async (file: File) => {
         return;
       }
 
-      // 找到 "email" 列的索引
-      const emailIndex = headers.findIndex((header) => header?.toLowerCase() === "email");
+      // 读取第二行的数据（用作邮箱格式验证）
+      const secondRow = XLSX.utils.sheet_to_json(worksheet, { header: 2 })[0] as Record<string, any>;
+
+      // 邮箱格式正则表达式
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      let emailIndex = -1;
+
+      // 查找包含邮箱格式的列
+      for (let index = 0; index < headers.length; index++) {
+        const cellValue = secondRow[headers[index]];
+        if (typeof cellValue === 'string' && emailRegex.test(cellValue)) {
+          emailIndex = index;
+          break;
+        }
+      }
 
       if (emailIndex === -1) {
-        ElMessage.error("Excel 中必须包含一列标题为 'email'，请检查格式！");
+        ElMessage.error("Excel 中未找到邮箱格式的列，请检查文件格式！");
         return;
       }
 
@@ -103,16 +117,18 @@ const handleFileChange = async (file: File) => {
         return;
       }
 
-      // 重新调整数据列顺序：确保 "email" 列是第一列
+      // 重新映射数据，保持原始列名
       jsonData = jsonData.map((entry) => {
         const newEntry: ExcelRow = {
-          email: entry[headers[emailIndex]] || "", // 确保有 email
+          email: entry[headers[emailIndex]] || "", // 确保邮箱列被正确提取
           state: 1, // 默认 state 为 1
         };
 
-        // 复制其他列（保持原顺序）
+        // 复制其他列（保持原顺序），但不包括邮箱列
         headers.forEach((key, index) => {
-          if (index !== emailIndex) newEntry[key] = entry[key];
+          if (index !== emailIndex) {
+            newEntry[key] = entry[key];
+          }
         });
 
         return newEntry; // 返回一个符合 ExcelRow 类型的数据
@@ -120,11 +136,13 @@ const handleFileChange = async (file: File) => {
 
       // 更新 excelData
       excelData.value = jsonData as ExcelRow[]; // 强制转换为 ExcelRow[]
+
     } finally {
       loading.value = false;
     }
   }, 100);
 };
+
 
 
 const readExcelFile = (File: any): Promise<string | ArrayBuffer | null> => {
@@ -241,10 +259,10 @@ const handleDeleteRow = (index: number) => {
 }
 
 const handleAddRow = () => {
-  if (excelData.value.length < 100) {
+  if (excelData.value.length < MAX_ROWS) {
     excelData.value.push({ email: '', state: 1 })
   } else {
-    ElMessage.warning('最多添加100行')
+    ElMessage.warning(`最多添加${MAX_ROWS}行`)
   }
 }
 
