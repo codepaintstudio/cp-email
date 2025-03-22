@@ -99,12 +99,19 @@ const readExcelFile = (File: any): Promise<string | ArrayBuffer | null> => {
 }
 
 // 其他操作方法
-const deleteData = () => {
+const deleteData = (options: string[]) => {
   loading.value = true
-  excelData.value = [{ email: '', state: 1 }]
-  emailContent.value = ''
-  subject.value = ''
+  if (options.includes('excel')) {
+    excelData.value = [{ email: '', state: 1 }]
+  }
+  if (options.includes('content')) {
+    emailContent.value = ''
+  }
+  if (options.includes('subject')) {
+    subject.value = ''
+  }
   isClick.value = false
+  loading.value = false
   sendProcess.value = 0
   loading.value = false
   ElMessage.success('数据已清空')
@@ -223,7 +230,7 @@ const handleLogout = () => {
       <ControlPanel
         :disable-send="excelData.length === 0 || isClick"
         @file-change="handleFileChange"
-        @clear-data="deleteData"
+        @clear-data="(options) => deleteData(options)"
         @send-emails="sendEmails"
         @download-template="handleDownloadTemplate"
       />
