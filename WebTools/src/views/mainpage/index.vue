@@ -18,6 +18,7 @@ const UserStore = useUserStore()
 interface ExcelRow {
   email: string
   state: number
+  [key: string]: any; // 允许动态添加其它字段
 }
 
 // 状态管理
@@ -52,36 +53,61 @@ onMounted(() => {
 // 文件处理方法
 let debounceTimer: number | null = null
 const handleFileChange = async (file: File) => {
-  if (!file) return
-  if (debounceTimer) clearTimeout(debounceTimer)
+  if (!file) return;
+  if (debounceTimer) clearTimeout(debounceTimer);
 
   debounceTimer = window.setTimeout(async () => {
-    loading.value = true
+    loading.value = true;
     try {
-      const data = await readExcelFile(file)
-      const workbook = XLSX.read(data, { type: 'binary' })
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-      let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 2 }) as ExcelRow[]
+      const data = await readExcelFile(file);
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
+      // 读取第一行作为标题
+      const headers = XLSX.utils.sheet_to_json(worksheet, { header: 1 })[0] as string[];
+      if (!headers) {
+        ElMessage.error("Excel 文件格式错误，无法读取标题行！");
+        return;
+      }
+
+      // 找到 "email" 列的索引
+      const emailIndex = headers.findIndex((header) => header?.toLowerCase() === "email");
+
+      if (emailIndex === -1) {
+        ElMessage.error("Excel 中必须包含一列标题为 'email'，请检查格式！");
+        return;
+      }
+
+      // 读取 Excel 数据，从第二行开始
+      let jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 2 }) as Record<string, any>[];
       if (jsonData.length > MAX_ROWS) {
-        ElMessage.error(`最多允许 ${MAX_ROWS} 行数据`)
-        excelData.value = [{ email: '', state: 1 }]
-        return
+        ElMessage.error(`最多允许 ${MAX_ROWS} 行数据`);
+        return;
       }
 
-      jsonData = jsonData.map((entry) => ({ ...entry, state: 1 }))
-      const emptyRowIndex = excelData.value.findIndex((row) => !row.email)
+      // 重新调整数据列顺序：确保 "email" 列是第一列
+      jsonData = jsonData.map((entry) => {
+        const newEntry: ExcelRow = {
+          email: entry[headers[emailIndex]] || "", // 确保有 email
+          state: 1, // 默认 state 为 1
+        };
 
-      if (emptyRowIndex > -1) {
-        excelData.value.splice(emptyRowIndex, 1, ...jsonData)
-      } else {
-        excelData.value = [...excelData.value, ...jsonData]
-      }
+        // 复制其他列（保持原顺序）
+        headers.forEach((key, index) => {
+          if (index !== emailIndex) newEntry[key] = entry[key];
+        });
+
+        return newEntry; // 返回一个符合 ExcelRow 类型的数据
+      });
+
+      // 更新 excelData
+      excelData.value = jsonData as ExcelRow[]; // 强制转换为 ExcelRow[]
     } finally {
-      loading.value = false
+      loading.value = false;
     }
-  }, 100)
-}
+  }, 100);
+};
+
 
 const readExcelFile = (File: any): Promise<string | ArrayBuffer | null> => {
   return new Promise((resolve, reject) => {
@@ -137,9 +163,9 @@ const sendEmails = async () => {
 
     acceptedEmail.value = res.data.data.successList
     updateEmailStates()
-    if(acceptedEmail.value.length > 0){
+    if (acceptedEmail.value.length > 0) {
       ElMessage.success('邮件发送完成')
-    }else{
+    } else {
       ElMessage.error('请检插邮件号是否符合要求')
     }
   } finally {
@@ -220,37 +246,20 @@ const handleLogout = () => {
 
     <div class="banner">
       <!-- 头部logo和账户信息 -->
-      <AppHeader
-        :user-email="userEemil"
-        :is-logged-in="isLogin"
-        @logout="handleLogout"
-      />
+      <AppHeader :user-email="userEemil" :is-logged-in="isLogin" @logout="handleLogout" />
 
       <!-- 功能区域 -->
-      <ControlPanel
-        :disable-send="excelData.length === 0 || isClick"
-        @file-change="handleFileChange"
-        @clear-data="(options) => deleteData(options)"
-        @send-emails="sendEmails"
-        @download-template="handleDownloadTemplate"
-      />
+      <ControlPanel :disable-send="excelData.length === 0 || isClick" @file-change="handleFileChange"
+                    @clear-data="(options) => deleteData(options)" @send-emails="sendEmails"
+                    @download-template="handleDownloadTemplate" />
 
       <!-- 邮件编写区域 -->
-      <EmailEditor
-        :subject="subject"
-        :content="emailContent"
-        @update:subject="(val) => (subject = val)"
-        @update:content="(val) => (emailContent = val)"
-      />
+      <EmailEditor :subject="subject" :content="emailContent" @update:subject="(val) => (subject = val)"
+                   @update:content="(val) => (emailContent = val)" />
 
       <!-- 邮件发送表格信息 -->
-      <EmailDataTable
-        :data="excelData"
-        :columns="columns"
-        :loading="loading"
-        @delete-row="handleDeleteRow"
-        @add-row="handleAddRow"
-      />
+      <EmailDataTable :data="excelData" :columns="columns" :loading="loading" @delete-row="handleDeleteRow"
+                      @add-row="handleAddRow" />
     </div>
   </div>
   <!-- 底部版权介绍 -->
@@ -266,6 +275,7 @@ const handleLogout = () => {
 :deep(.el-input__wrapper) {
   box-shadow: none;
 }
+
 .footer {
   padding: 20px 0;
   margin: 2rem 0 -8px;

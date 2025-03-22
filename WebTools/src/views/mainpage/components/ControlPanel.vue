@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { UploadFilled, Promotion } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
 
 defineProps({
   disableSend: Boolean
