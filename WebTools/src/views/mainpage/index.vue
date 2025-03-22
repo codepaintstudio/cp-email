@@ -11,6 +11,7 @@ import ControlPanel from './components/ControlPanel.vue'
 import EmailEditor from './components/EmailEditor.vue'
 import EmailDataTable from './components/EmailDataTable.vue'
 import { sendEmailService } from '@/api/postEmail'
+import { extractVariables } from '@/utils/extract'
 
 const router = useRouter()
 const UserStore = useUserStore()
@@ -49,6 +50,23 @@ onMounted(() => {
     router.replace({ name: 'Login' })
   }
 })
+
+const validateExcelColumns = (requiredColumns: string[]): string[] => {
+  // 获取当前 Excel 所有列名（排除 'email' 和 'state'）
+  const existingColumns = columns.value.filter(
+    col => col !== 'email' && col !== 'state'
+  );
+  
+  // 通过 Set 存储缺失的列名
+  const missing = new Set<string>();
+  requiredColumns.forEach(col => {
+    if (!existingColumns.includes(col)) {
+      missing.add(col);
+    }
+  });
+  
+  return Array.from(missing); // 转换为数组返回
+};
 
 // 文件处理方法
 let debounceTimer: number | null = null
@@ -147,11 +165,23 @@ const sendEmails = async () => {
   if (!validateBeforeSend()) return
   isClick.value = true
 
+  // 提取模板变量并验证
+  const variables = extractVariables(emailContent.value)
+  const missingVars = validateExcelColumns(variables)
+  if (missingVars.length > 0) {
+    ElMessage.error(`导入的execl缺少以下列：${missingVars.join(', ')}`)
+    isClick.value = false
+    return
+  }
   try {
     const receiverItems = excelData.value.map((item) => [
       item.email,
-      new Date().toLocaleString()
+      new Date().toLocaleString(),
+      Object.fromEntries(
+        variables.map(key => [key, item[key]])
+      )
     ])
+    console.log(receiverItems)
 
     const res = await sendEmailService({
       email: UserStore.email,

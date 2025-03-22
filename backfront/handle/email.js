@@ -128,19 +128,29 @@ const sendEmails = async (req, res) => {
     return;
   }
   const smtpServer = smtpServerObj.smtpServer;
-  const contentArray = content.split('${text}');
+  // 处理邮件发送
   const emailList = receiverItemsArray.map(items => {
-    const newContent = joinArrays(contentArray, items.slice(1));
+    const [receiverEmail, timestamp, variables] = items;
+    
+    // 动态替换内容
+    let replacedContent = content;
+    for (const [varName, varValue] of Object.entries(variables)) {
+      const regex = new RegExp(`{${varName}}`, 'g');
+      replacedContent = replacedContent.replace(regex, varValue ?? '');
+    }
+
+    // 构造消息
     const message = {
-      from: `<${email}>`, // sender address
-      to: items[0], // list of receivers
-      subject: subject, // Subject line
-      text: newContent, // plain text body
-      html: newContent, // html body
+      from: `<${email}>`,
+      to: receiverEmail,
+      subject: subject,
+      text: replacedContent,
+      html: replacedContent 
     };
-    console.log(message);
-    return sendMail(message, smtpServer);
+
+    return sendMail(message, smtpServerObj.smtpServer);
   });
+  console.log(emailList)
   const messages = compactArr(await Promise.all(emailList));
   sendRes(
     res,
