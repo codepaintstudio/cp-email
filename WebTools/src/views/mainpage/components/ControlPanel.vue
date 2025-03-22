@@ -34,7 +34,6 @@ const openClearDialog = () => {
 const confirmClear = () => {
   emit('clear-data', selectedClearOptions.value)
   clearDialogVisible.value = false
-  ElMessage.success('已清除选择的内容')
 }
 
 const handleFileChange = (file: any) => {
