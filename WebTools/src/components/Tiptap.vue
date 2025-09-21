@@ -121,13 +121,12 @@ const handleImageUpload = async (options) => {
     if (
       !response ||
       !response.data ||
-      !response.data.data ||
-      !response.data.data.file
+      !response.data.file
     ) {
       throw new Error('上传响应格式不正确')
     }
 
-    const imageUrl = response.data.data.file
+    const imageUrl = response.data.file
     console.log('图片 URL:', imageUrl)
 
     if (editor.value) {
