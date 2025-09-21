@@ -12,4 +12,4 @@ aliyun:
   accessKeyId: "LTAI5tMMtJY5Y8VRqEbiFkvh"
   accessKeySecret: "JTcvh3NUn3B0w70h2SZOgdljqdZQe6"
   bucket: "imgurl-oss"
-  region: "oss-cn-chengdu"
+  region: "cn-chengdu"

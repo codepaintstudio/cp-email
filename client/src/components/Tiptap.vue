@@ -116,17 +116,27 @@ const handleImageUpload = async (options) => {
 
     const response = await uploadPhotoService(formData)
     console.log('上传响应:', response) // 打印完整的响应
+    console.log('response.data:', response.data) // 打印响应数据
+    console.log('response.data.data:', response.data.data) // 打印嵌套数据
 
     // 检查 response 的结构
     if (
       !response ||
       !response.data ||
-      !response.data.file
+      !response.data.data ||
+      !response.data.data.file
     ) {
+      console.error('响应结构错误:', {
+        hasResponse: !!response,
+        hasData: !!response?.data,
+        hasDataData: !!response?.data?.data,
+        hasFile: !!response?.data?.data?.file,
+        actualData: response?.data
+      })
       throw new Error('上传响应格式不正确')
     }
 
-    const imageUrl = response.data.file
+    const imageUrl = response.data.data.file
     console.log('图片 URL:', imageUrl)
 
     if (editor.value) {

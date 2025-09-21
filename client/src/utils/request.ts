@@ -15,7 +15,7 @@ interface ApiResponse<T = unknown> {
   msg?: string
 }
 
-const baseURL = 'http://127.0.0.1:4443/api'
+const baseURL = '/api'
 
 const instance = axios.create({
   baseURL

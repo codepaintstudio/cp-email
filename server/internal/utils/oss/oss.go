@@ -76,9 +76,9 @@ func (s *OSSService) UploadFile(file *multipart.FileHeader) (string, bool, error
 
 	if exists {
 		// 文件已存在，返回URL
-		url := fmt.Sprintf("https://%s.%s.aliyuncs.com/%s",
+		url := fmt.Sprintf("https://%s.oss-%s.aliyuncs.com/%s",
 			config.AppConfig.OSS.Bucket,
-			fmt.Sprintf("oss-%s", config.AppConfig.OSS.Region),
+			config.AppConfig.OSS.Region,
 			objectKey)
 		return url, true, nil
 	}
@@ -90,9 +90,9 @@ func (s *OSSService) UploadFile(file *multipart.FileHeader) (string, bool, error
 	}
 
 	// 返回文件URL
-	url := fmt.Sprintf("https://%s.%s.aliyuncs.com/%s",
+	url := fmt.Sprintf("https://%s.oss-%s.aliyuncs.com/%s",
 		config.AppConfig.OSS.Bucket,
-		fmt.Sprintf("oss-%s", config.AppConfig.OSS.Region),
+		config.AppConfig.OSS.Region,
 		objectKey)
 
 	return url, false, nil
@@ -116,9 +116,9 @@ func (s *OSSService) UploadTemplate(file *multipart.FileHeader) (string, error) 
 	}
 
 	// 返回文件URL
-	url := fmt.Sprintf("https://%s.%s.aliyuncs.com/%s",
+	url := fmt.Sprintf("https://%s.oss-%s.aliyuncs.com/%s",
 		config.AppConfig.OSS.Bucket,
-		fmt.Sprintf("oss-%s", config.AppConfig.OSS.Region),
+		config.AppConfig.OSS.Region,
 		objectKey)
 
 	return url, nil

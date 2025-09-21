@@ -3,6 +3,7 @@ package app
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"cpmail/internal/config"
 	"cpmail/internal/handler"
@@ -15,6 +16,10 @@ import (
 func Run() {
 	// 加载配置
 	config.LoadConfig()
+
+	// 获取当前工作目录，用于调试
+	workDir, _ := os.Getwd()
+	log.Printf("当前工作目录: %s", workDir)
 
 	// 设置 Gin 模式
 	gin.SetMode(gin.ReleaseMode)
@@ -45,9 +50,43 @@ func Run() {
 
 	// 设置静态文件服务
 	r.Static("/public", "./public")
+	r.Static("/assets", "./dist/assets")
+	r.StaticFile("/favicon.ico", "./dist/favicon.ico")
 
 	// 注册路由
 	registerRoutes(r, authHandler, emailHandler, templateHandler, uploadHandler)
+
+	// 前端路由处理 - 放在最后，作为fallback
+	r.NoRoute(func(c *gin.Context) {
+		log.Printf("NoRoute处理路径: %s", c.Request.URL.Path)
+
+		// 如果是API请求，返回404
+		if len(c.Request.URL.Path) >= 4 && c.Request.URL.Path[:4] == "/api" {
+			log.Printf("API请求未找到: %s", c.Request.URL.Path)
+			c.JSON(404, gin.H{"error": "API endpoint not found"})
+			return
+		}
+
+		// 检查文件是否存在，使用绝对路径
+		workDir, _ := os.Getwd()
+		indexPath := filepath.Join(workDir, "dist", "index.html")
+		log.Printf("尝试访问文件: %s", indexPath)
+
+		if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+			log.Printf("前端文件不存在: %s", indexPath)
+			// 尝试备用路径
+			indexPath = "./dist/index.html"
+			if _, err := os.Stat(indexPath); os.IsNotExist(err) {
+				log.Printf("备用路径也不存在: %s", indexPath)
+				c.String(404, "前端文件未找到")
+				return
+			}
+		}
+
+		log.Printf("返回前端页面: %s", indexPath)
+		// 返回前端index.html，让前端路由处理
+		c.File(indexPath)
+	})
 
 	// 启动服务器
 	port := config.AppConfig.Server.Port
