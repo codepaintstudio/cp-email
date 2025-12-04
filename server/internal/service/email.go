@@ -19,15 +19,19 @@ type EmailService struct {
 	running   bool
 	mutex     sync.Mutex
 	dbService *db.DBService
+
+	// 节流与重试控制
+	sendInterval time.Duration
+	maxRetries   int
 }
 
 type EmailTask struct {
-	Email             string                 `json:"email"`
-	Password          string                 `json:"password"`
-	Subject           string                 `json:"subject"`
-	ReceiverItemsArray [][]interface{}        `json:"receiverItemsArray"`
-	Content           string                 `json:"content"`
-	ResponseChan      chan *EmailSendResult  `json:"-"`
+	Email              string                `json:"email"`
+	Password           string                `json:"password"`
+	Subject            string                `json:"subject"`
+	ReceiverItemsArray [][]interface{}       `json:"receiverItemsArray"`
+	Content            string                `json:"content"`
+	ResponseChan       chan *EmailSendResult `json:"-"`
 }
 
 type EmailSendResult struct {
@@ -35,23 +39,25 @@ type EmailSendResult struct {
 }
 
 type SendEmailRequest struct {
-	Email             string          `json:"email" binding:"required"`
-	Password          string          `json:"password" binding:"required"`
-	Subject           string          `json:"subject" binding:"required"`
+	Email              string          `json:"email" binding:"required"`
+	Password           string          `json:"password" binding:"required"`
+	Subject            string          `json:"subject" binding:"required"`
 	ReceiverItemsArray [][]interface{} `json:"receiverItemsArray" binding:"required"`
-	Content           string          `json:"content" binding:"required"`
+	Content            string          `json:"content" binding:"required"`
 }
 
 func NewEmailService(dbService *db.DBService) *EmailService {
 	service := &EmailService{
-		queue:     make(chan *EmailTask, 100), // 队列大小为100
-		running:   false,
-		dbService: dbService,
+		queue:        make(chan *EmailTask, 100), // 队列大小为100
+		running:      false,
+		dbService:    dbService,
+		sendInterval: time.Second,
+		maxRetries:   2,
 	}
-	
+
 	// 启动邮件处理goroutine
 	go service.processQueue()
-	
+
 	return service
 }
 
@@ -64,12 +70,12 @@ func (s *EmailService) SendEmail(c *gin.Context) {
 
 	// 创建任务
 	task := &EmailTask{
-		Email:             req.Email,
-		Password:          req.Password,
-		Subject:           req.Subject,
+		Email:              req.Email,
+		Password:           req.Password,
+		Subject:            req.Subject,
 		ReceiverItemsArray: req.ReceiverItemsArray,
-		Content:           req.Content,
-		ResponseChan:      make(chan *EmailSendResult, 1),
+		Content:            req.Content,
+		ResponseChan:       make(chan *EmailSendResult, 1),
 	}
 
 	// 将任务加入队列
@@ -108,51 +114,75 @@ func (s *EmailService) sendEmails(task *EmailTask) *EmailSendResult {
 	smtpConfig.Username = task.Email
 	smtpConfig.Password = task.Password
 
-	// 创建SMTP客户端
+	successList := make([]string, 0, len(task.ReceiverItemsArray))
+	failureQueue := task.ReceiverItemsArray
+
+	client, err := s.connectSMTPClient(smtpConfig)
+	if err != nil {
+		fmt.Printf("连接SMTP服务器失败: %v\n", err)
+		return &EmailSendResult{SuccessList: successList}
+	}
+	defer func() {
+		if client != nil {
+			client.Close()
+		}
+	}()
+
+	sendBatch := func(client *smtp.SMTPClient, queue [][]interface{}) [][]interface{} {
+		var remaining [][]interface{}
+		for _, items := range queue {
+			if len(items) < 3 {
+				continue
+			}
+
+			receiverEmail, ok := items[0].(string)
+			if !ok {
+				continue
+			}
+
+			variables, ok := items[2].(map[string]interface{})
+			if !ok {
+				variables = make(map[string]interface{})
+			}
+
+			replacedContent := task.Content
+			for varName, varValue := range variables {
+				varValueStr := fmt.Sprintf("%v", varValue)
+				replacedContent = strings.ReplaceAll(replacedContent, "{"+varName+"}", varValueStr)
+			}
+
+			if err := client.SendEmail([]string{receiverEmail}, task.Subject, replacedContent); err != nil {
+				fmt.Printf("发送邮件给 %s 失败: %v\n", receiverEmail, err)
+				remaining = append(remaining, items)
+			} else {
+				successList = append(successList, receiverEmail)
+			}
+
+			time.Sleep(s.sendInterval)
+		}
+
+		return remaining
+	}
+
+	failureQueue = sendBatch(client, failureQueue)
+	for attempt := 1; attempt <= s.maxRetries && len(failureQueue) > 0; attempt++ {
+		client.Close()
+		client, err = s.connectSMTPClient(smtpConfig)
+		if err != nil {
+			fmt.Printf("重试连接SMTP失败(第%d次): %v\n", attempt, err)
+			client = nil
+			continue
+		}
+		failureQueue = sendBatch(client, failureQueue)
+	}
+
+	return &EmailSendResult{SuccessList: successList}
+}
+
+func (s *EmailService) connectSMTPClient(smtpConfig *smtp.SMTPConfig) (*smtp.SMTPClient, error) {
 	client := smtp.NewSMTPClient(smtpConfig)
 	if err := client.Connect(); err != nil {
-		fmt.Printf("连接SMTP服务器失败: %v\n", err)
-		return &EmailSendResult{
-			SuccessList: []string{},
-		}
+		return nil, err
 	}
-	defer client.Close()
-
-	// 发送邮件
-	var successList []string
-	for _, items := range task.ReceiverItemsArray {
-		if len(items) < 3 {
-			continue
-		}
-
-		receiverEmail, ok := items[0].(string)
-		if !ok {
-			continue
-		}
-
-		variables, ok := items[2].(map[string]interface{})
-		if !ok {
-			variables = make(map[string]interface{})
-		}
-
-		// 动态替换内容
-		replacedContent := task.Content
-		for varName, varValue := range variables {
-			// 将变量转换为字符串
-			varValueStr := fmt.Sprintf("%v", varValue)
-			replacedContent = strings.ReplaceAll(replacedContent, "{"+varName+"}", varValueStr)
-		}
-
-		// 发送邮件
-		err := client.SendEmail([]string{receiverEmail}, task.Subject, replacedContent)
-		if err == nil {
-			successList = append(successList, receiverEmail)
-		} else {
-			fmt.Printf("发送邮件给 %s 失败: %v\n", receiverEmail, err)
-		}
-	}
-
-	return &EmailSendResult{
-		SuccessList: successList,
-	}
+	return client, nil
 }
