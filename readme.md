@@ -249,6 +249,10 @@ const stats = await axios.get("http://127.0.0.1:4443/api/email/stats", {
 4. **数据库**：项目使用 SQLite 数据库，数据文件默认存储在 `server/data/cpmail.db`
 5. **端口配置**：默认端口为 4443，可通过配置文件修改
 
+## 贡献者
+
+![](https://hub-io-mcells-projects.vercel.app/r/codepaintstudio/cp-email)
+
 ## 许可证
 
 本项目采用 MIT 许可证，详情请见 [LICENSE](LICENSE) 文件。
